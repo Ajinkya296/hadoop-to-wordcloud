@@ -1,0 +1,34 @@
+var co_occur_blockchain_NYT = [
+    {
+        "text":"[new,transformations]",
+        "size":66
+    },
+    {
+        "text":"[bitcoin,cryptocurrency]",
+        "size":59
+    },
+    {
+        "text":"[bitcoin,increased]",
+        "size":58
+    },
+    {
+        "text":"[crypto,utopia]",
+        "size":58
+    },
+    {
+        "text":"[bitcoin,value]",
+        "size":55
+    },
+    {
+        "text":"[blockchain,ethereum]",
+        "size":52
+    },
+    {
+        "text":"[bitcoin,family]",
+        "size":42
+    },
+    {
+        "text":"[blockchain,bitcoin]",
+        "size":36
+    }
+]

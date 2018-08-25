@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+body {
+  font: 10px sans-serif;
+}
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+.bar {
+  fill: orange;
+}
+.bar2 {
+  fill: TURQUOISE;
+}
+.bar2:hover {
+  fill: DARKTURQUOISE ;
+}
+.bar:hover {
+  fill: orangered ;
+}
+
+.x.axis path {
+  display: none;
+}
+
+.d3-tip {
+  line-height: 1;
+  font-weight: bold;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  border-radius: 2px;
+}
+
+/* Creates a small triangle extender for the tooltip */
+.d3-tip:after {
+  box-sizing: border-box;
+  display: inline;
+  font-size: 10px;
+  width: 100%;
+  line-height: 1;
+  color: rgba(0, 0, 0, 0.8);
+  content: "\25BC";
+  position: absolute;
+  text-align: center;
+}
+
+/* Style northward tooltips differently */
+.d3-tip.n:after {
+  margin: -1px 0 0 0;
+  top: 100%;
+  left: 0;
+}
+</style>
+<body  style="text-align: center">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+<div style= "background: #A6E8F5"class="jumbotron">
+<div class="container">
+    <p class="display-4 ">Map Reduce Demo</p>
+    <p style = "font-size:30px" >Word Count</p>
+    <p style = "font-size:25px">We have collected Tweets and NY Times articles on "Trump" and "Blockchain". Below you can view the word cloud and barcharts obtained after performing Map Reduce on the data.</p>
+  </div>
+</div>
+<div   style = "margin: auto; max-width: 600px;">
+<div class="row" id="input_row">
+  <select id = "source" class="form-control col-md-5 ">
+    <option value="" selected disabled>Source</option>
+    <option value="NY Times">NY Times</option>
+    <option value="Twitter">Twitter</option>
+</select>
+  <select id = "topic" class="form-control col-md-5">
+    <option value="" selected disabled>Topic</option>
+    <option value="trump">trump</option>
+    <option value="blockchain">blockchain</option>
+</select>
+
+  <input id="clickMe" type="button" value="Draw Charts" onclick="draw_graphs()" />
+</div>
+</div>
+  <script src="d3.js" charset="utf-8"></script>
+  <script src="trump_rest_arti_output.js"></script>
+  <script src="blockchain_rest_arti_output.js"></script>
+  <script src="tweet_rest_blockchain_output.js"></script>
+  <script src="tweets_rest_trump_output.js"></script>
+  <script src="NYT_trump_output_co.js"></script>
+  <script src="Tweet_trump_output_co.js"></script>
+  <script src="Tweet_blockchain_output_co.js"></script>
+  <script src="NYT_blockchain_output_co.js"></script>
+  <br><br>
+  <div id = "wordcloud">
+  </div>
+  <br>
+  <div id = "barchartDiv">
+  </div>
+  <div id = "co_occurDiv">
+  </div>
+  <br>
+  <script src="http://d3js.org/d3.v3.min.js"></script>
+  <script src="http://labratrevenge.com/d3-tip/javascripts/d3.tip.v0.6.3.js"></script>
+  <script src="d3.wordcloud.js"></script>
+  <script src="d3.layout.cloud.js"></script>
+  <script>
+    function draw_graphs()
+    {
+      var svg_WC = document.getElementById('wordcloudsvg')
+      var svg_BC = document.getElementById('barchart')
+      var svg_Co_BC = document.getElementById('Co_barchart')
+      var FC_button = document.getElementById('co_button')
+      if(svg_WC != null)
+      {
+        svg_WC.parentNode.removeChild(svg_WC);
+        svg_BC.parentNode.removeChild(svg_BC);
+        FC_button.parentNode.removeChild(FC_button);
+      }
+      if(svg_Co_BC != null)
+      {
+        svg_Co_BC.parentNode.removeChild(svg_Co_BC);
+      }
+
+      var topic = document.getElementById('topic').value;
+      var source = document.getElementById('source').value;
+      if(topic == "trump" && source == "NY Times")
+      {
+        words = arti_words_trump
+        filename = "trump_rest_arti_output.tsv"
+      }
+      else if (topic == "trump" && source == "Twitter")
+      {
+        words = tweet_words_trump
+        filename = "tweets_rest_trump_output.tsv"
+      }
+      else if (topic == "blockchain" && source == "Twitter")
+      {
+        words = tweet_words_blockchain
+        filename = "tweet_rest_blockchain_output.tsv"
+      }
+      else if (topic == "blockchain" && source == "NY Times")
+      {
+        words = arti_words_blockchain
+        filename = "blockchain_rest_arti_output.tsv"
+      }
+      d3.wordcloud()
+        .size([800, 500])
+        .fill(d3.scale.ordinal().range(["#e53935", "#D81B60", "#8E24AA", "#3949AB", "#039BE5", "#43A047", "#C0CA33", "#FFB300"]))
+        .words(words)
+        .onwordclick(function(d, i) {
+          if (d.href) { window.location = d.href; }
+        })
+        .start();
+        var margin = {top: 40, right: 10, bottom: 30, left: 60},
+            width = 1350 - margin.left - margin.right,
+            height = 500 - margin.top - margin.bottom;
+
+        var formatPercent = d3.format("");
+
+        var x = d3.scale.ordinal()
+            .rangeRoundBands([0, width], .1);
+
+        var y = d3.scale.linear()
+            .range([height, 0]);
+
+        var xAxis = d3.svg.axis()
+            .scale(x)
+            .orient("bottom");
+
+        var yAxis = d3.svg.axis()
+            .scale(y)
+            .orient("left")
+            .tickFormat(formatPercent);
+
+        var tip = d3.tip()
+          .attr('class', 'd3-tip')
+          .offset([-10, 0])
+          .html(function(d) {
+            return "<strong>"+d.text+":</strong> <span style='color:red'>" + d.size + "</span>";
+          })
+
+        var svg = d3.select("#barchartDiv").append("svg")
+            .attr("id","barchart")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+          .append("g")
+            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+        svg.call(tip);
+        d3.tsv(filename, type, function(error, data) {
+          console.log(data)
+          x.domain(data.map(function(d) {return d.text; }));
+          y.domain([0, d3.max(data, function(d) { return d.size; })]);
+          svg.append("g")
+              .attr("class", "x axis")
+              .attr("transform", "translate(0," + height + ")")
+              .call(xAxis);
+
+          svg.append("g")
+              .attr("class", "y axis")
+              .call(yAxis)
+            .append("text")
+              .attr("transform", "rotate(-90)")
+              .attr("y", 1)
+              .attr("dy", "6em")
+              .style("text-anchor", "end")
+
+          svg.selectAll(".bar")
+              .data(data)
+            .enter().append("rect")
+              .attr("class", "bar")
+              .attr("x", function(d) { return x(d.text); })
+              .attr("width", x.rangeBand())
+              .attr("y", function(d) { return y(d.size); })
+              .attr("height", function(d) { return height - y(d.size); })
+              .on('mouseover', tip.show)
+              .on('mouseout', tip.hide)
+
+        });
+
+        function type(d) {
+          d.size = +d.size;
+          return d;
+        }
+        var co_button = document.createElement('input')
+        co_button.setAttribute("id","co_button")
+        co_button.setAttribute("type","button")
+        co_button.setAttribute("value","Find Co-occurances")
+        co_button.setAttribute("onclick","draw_Occur_barC()")
+        var div =  document.getElementById('barchartDiv')
+        div.appendChild(document.createElement('br'))
+        div.appendChild(co_button)
+      console.log("done")
+    }
+    function draw_Occur_barC(){
+      var svg_Co_BC = document.getElementById('Co_barchart')
+      if(svg_Co_BC != null)
+      {
+        svg_Co_BC.parentNode.removeChild(svg_Co_BC);
+      }
+      //sort bars based on value
+      var topic = document.getElementById('topic').value;
+      var source = document.getElementById('source').value;
+      if(topic == "trump" && source == "NY Times")
+      {
+        data = co_occur_trump_NYT
+      }
+      else if (topic == "trump" && source == "Twitter")
+      {
+        data = co_occur_trump_Tweets
+      }
+      else if (topic == "blockchain" && source == "Twitter")
+      {
+        data = co_occur_blockchain_Tweets
+      }
+      else if (topic == "blockchain" && source == "NY Times")
+      {
+        data = co_occur_blockchain_NYT
+      }
+        data = data.sort(function (a, b) {
+            return d3.ascending(a.size, b.size);
+        })
+        console.log(data)
+        //set up svg using margin conventions - we'll need plenty of room on the left for labels
+        var margin = {
+            top: 15,
+            right: 50,
+            bottom: 15,
+            left: 175
+        };
+
+        var width = 960 - margin.left - margin.right,
+            height = 500 - margin.top - margin.bottom;
+
+        var svg = d3.select("#co_occurDiv").append("svg")
+            .attr("id","Co_barchart")
+            .attr("width", width + margin.left + margin.right)
+            .attr("height", height + margin.top + margin.bottom)
+            .append("g")
+            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+        var x = d3.scale.linear()
+            .range([0, width])
+            .domain([0, d3.max(data, function (d) {
+                return d.size;
+            })]);
+
+        var y = d3.scale.ordinal()
+            .rangeRoundBands([height, 0], .1)
+            .domain(data.map(function (d) {
+                return d.text;
+            }));
+
+        //make y axis to show bar texts
+        var yAxis = d3.svg.axis()
+            .scale(y)
+            //no tick marks
+            .tickSize(0)
+            .orient("left");
+
+        var gy = svg.append("g")
+            .attr("class", "y axis")
+            .call(yAxis)
+
+        var bars = svg.selectAll(".bar")
+            .data(data)
+            .enter()
+            .append("g")
+
+        //append rects
+        bars.append("rect")
+            .attr("class", "bar2")
+            .attr("y", function (d) {
+                return y(d.text);
+            })
+            .attr("height", y.rangeBand())
+            .attr("x", 0)
+            .attr("width", function (d) {
+                return x(d.size);
+            });
+        //add a size label to the right of each bar
+        bars.append("text")
+            .attr("class", "label")
+            //y position of the label is halfway down the bar
+            .attr("y", function (d) {
+                return y(d.text) + y.rangeBand() / 2 + 4;
+            })
+            //x position is 3 pixels to the right of the bar
+            .attr("x", function (d) {
+                return x(d.size) + 3;
+            })
+            .text(function (d) {
+                return d.size;
+            });
+    }
+
+  </script>
+
+<br>
+<br>
+<br>
+</body>
